@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Presensi Otomatis - Kelas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .form-content {
+            padding: 25px 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .camera-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .camera-preview {
+            position: relative;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        .photo-result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .photo-result p {
+            color: #2e7d32;
+            font-size: 14px;
+        }
+
+        .btn-camera {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-camera:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+
+        .status.loading {
+            background: #e2e3e5;
+            color: #383d41;
+            display: block;
+        }
+
+        .info-time {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+            color: #1976d2;
+        }
+
+        footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 PRESENSI OTOMATIS</h1>
+            <p>Mata Kuliah Teknologi dan Rekayasa</p>
+        </div>
+
+        <div class="form-content">
+            <div class="info-time">
+                ⏰ Waktu Presensi: <span id="currentTime">--:--:--</span>
+            </div>
+
+            <form id="presensiForm">
+                <div class="form-group">
+                    <label>📝 NIM</label>
+                    <input type="text" id="nim" placeholder="Contoh: 20230810001" maxlength="20" required>
+                </div>
+
+                <div class="form-group">
+                    <label>👤 Nama Lengkap</label>
+                    <input type="text" id="nama" placeholder="Contoh: Rafi Ahmad" maxlength="100" required>
+                </div>
+
+                <div class="camera-section">
+                    <label>📸 Foto Selfie (Wajib)</label>
+                    <div class="camera-preview">
+                        <video id="video" autoplay playsinline></video>
+                        <canvas id="canvas"></canvas>
+                    </div>
+                    <button type="button" id="ambilFotoBtn" class="btn-camera">📷 Ambil Foto</button>
+                    <div id="photoResult" class="photo-result">
+                        <p>✓ Foto berhasil diambil</p>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn-submit" disabled>✅ Kirim Presensi</button>
+            </form>
+
+            <div id="statusMessage" class="status"></div>
+        </div>
+
+        <footer>
+            Sistem Presensi Otomatis | Terhubung ke WiFi Kelas
+        </footer>
+    </div>
+
+    <script>
+        // ========== URL GOOGLE APPS SCRIPT ANDA ==========
+        // URL ini sudah saya masukkan berdasarkan yang Anda berikan
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiWwpBMMP6tODtBWhAU-BwHL2v04fsuvrgpX_ZEJxduqkRZK-gfERGF6Jucy_Myd-qRw/exec';
+        
+        // ========== VARIABEL ==========
+        let fotoData = null;
+        let videoStream = null;
+
+        // Elemen DOM
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ambilFotoBtn = document.getElementById('ambilFotoBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const nimInput = document.getElementById('nim');
+        const namaInput = document.getElementById('nama');
+        const statusDiv = document.getElementById('statusMessage');
+        const photoResultDiv = document.getElementById('photoResult');
+        const currentTimeSpan = document.getElementById('currentTime');
+
+        // ========== UPDATE WAKTU REAL-TIME ==========
+        function updateRealTime() {
+            const now = new Date();
+            const jam = String(now.getHours()).padStart(2, '0');
+            const menit = String(now.getMinutes()).padStart(2, '0');
+            const detik = String(now.getSeconds()).padStart(2, '0');
+            currentTimeSpan.textContent = `${jam}:${menit}:${detik}`;
+        }
+        updateRealTime();
+        setInterval(updateRealTime, 1000);
+
+        // ========== AKSES KAMERA ==========
+        async function startCamera() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" }
+                });
+                video.srcObject = videoStream;
+                await video.play();
+                console.log("Kamera siap");
+                return true;
+            } catch (error) {
+                console.error("Error kamera:", error);
+                showStatus("Tidak dapat mengakses kamera. Pastikan izin diberikan.", "error");
+                ambilFotoBtn.disabled = true;
+                return false;
+            }
+        }
+
+        // ========== AMBIL FOTO ==========
+        function ambilFoto() {
+            if (!video.videoWidth || !video.videoHeight) {
+                showStatus("Kamera belum siap. Tunggu sebentar.", "error");
+                return;
+            }
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            fotoData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            photoResultDiv.style.display = 'block';
+            ambilFotoBtn.innerHTML = '✓ Foto Tersimpan';
+            ambilFotoBtn.style.background = '#4caf50';
+            
+            checkFormComplete();
+        }
+
+        // ========== CEK FORM ==========
+        function checkFormComplete() {
+            const nim = nimInput.value.trim();
+            const nama = namaInput.value.trim();
+            
+            if (nim && nama && fotoData) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        // ========== TAMPILKAN STATUS ==========
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    if (statusDiv.className === `status ${type}`) {
+                        statusDiv.style.display = 'none';
+                        statusDiv.className = 'status';
+                    }
+                }, 5000);
+            }
+        }
+
+        // ========== KIRIM DATA KE GOOGLE SHEETS ==========
+        async function kirimPresensi(nim, nama, foto) {
+            const sekarang = new Date();
+            const waktuISO = sekarang.toISOString();
+            const waktuLokal = sekarang.toLocaleString('id-ID');
+            
+            // Data yang akan dikirim ke Google Apps Script
+            const data = {
+                nim: nim,
+                nama: nama,
+                foto: foto,
+                waktu: waktuISO,
+                waktu_lokal: waktuLokal
+            };
+            
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Penting untuk menghindari CORS error
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                // Karena mode 'no-cors', kita tidak bisa membaca response
+                // Anggap berhasil jika tidak error
+                console.log("Data terkirim ke Google Sheets");
+                return true;
+                
+            } catch (error) {
+                console.error("Error saat mengirim:", error);
+                return false;
+            }
+        }
+
+        // ========== RESET FORM ==========
+        function resetForm() {
+            nimInput.value = '';
+            namaInput.value = '';
+            fotoData = null;
+            photoResultDiv.style.display = 'none';
+            ambilFotoBtn.innerHTML = '📷 Ambil Foto';
+            ambilFotoBtn.style.background = '#ff9800';
+            submitBtn.disabled = true;
+        }
+
+        // ========== HANDLE SUBMIT ==========
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            const nim = nimInput.value.trim();
+            const nama = namaInput.value.trim();
+            
+            if (!nim || !nama || !fotoData) {
+                showStatus("Lengkapi semua data dan foto!", "error");
+                return;
+            }
+            
+            showStatus("⏳ Mengirim data presensi...", "loading");
+            
+            submitBtn.disabled = true;
+            ambilFotoBtn.disabled = true;
+            
+            const success = await kirimPresensi(nim, nama, fotoData);
+            
+            if (success) {
+                showStatus("✅ Presensi berhasil! Data telah tersimpan.", "success");
+                resetForm();
+            } else {
+                showStatus("❌ Gagal mengirim data. Coba lagi.", "error");
+                submitBtn.disabled = false;
+                ambilFotoBtn.disabled = false;
+            }
+        }
+
+        // ========== EVENT LISTENERS ==========
+        nimInput.addEventListener('input', checkFormComplete);
+        namaInput.addEventListener('input', checkFormComplete);
+        ambilFotoBtn.addEventListener('click', ambilFoto);
+        
+        const form = document.getElementById('presensiForm');
+        form.addEventListener('submit', handleSubmit);
+        
+        // ========== INIT ==========
+        startCamera();
+        
+        // Cek dukungan kamera
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showStatus("Browser Anda tidak mendukung akses kamera.", "error");
+            ambilFotoBtn.disabled = true;
+        }
+    </script>
+</body>
+</html>
