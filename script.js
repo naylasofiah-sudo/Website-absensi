@@ -1,6 +1,6 @@
 // ========== KONFIGURASI ==========
 // Ganti dengan URL Google Apps Script Anda
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiWwpBMMP6tODtBWhAU-BwHL2v04fsuvrgpX_ZEJxduqkRZK-gfERGF6Jucy_Myd-qRw/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDIyEezAd257dhQeikOhGFyuX9u_SbaqF6lnBQjl2maSZTvtSFxfWaZLMpPn89W_0fNw/exec';
 
 // ========== VARIABEL GLOBAL ==========
 let fotoData = null;
