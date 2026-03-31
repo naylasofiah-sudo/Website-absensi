@@ -1,5 +1,5 @@
 // ========== KONFIGURASI ==========
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5hBEacAKKv1jzq9M3HNRHUdhLh42VeiYxASoZ9pFZy3jGqltuLUSnSK5bSMF9F6IIhQ/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVL-c1X8OVenIoxNWEme3hbghjwVH6eX0WBc31t9IS_WPYoM6YGI2TyZuEELahtL3ZPg/exec';
 // ========== VARIABEL GLOBAL ==========
 let fotoData = null;
 let videoStream = null;
