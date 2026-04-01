@@ -1,5 +1,7 @@
 // ========== KONFIGURASI ==========
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbznqJBUWjKGcbKXd4Bu1-ryDIMHjIOlCUAnjO5Ji7dwLgCFAZwKexENwWtP2TvaTqso/exec';
+// GANTI DENGAN URL APPS SCRIPT ANDA
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwFJ-y2hDHY_nkOZqgssmPZbx5nJmBEkjPEtJ1kh3zBod91p65fP770JnZc_FAx40xF7A/exec';
+
 // ========== VARIABEL GLOBAL ==========
 let fotoData = null;
 let videoStream = null;
@@ -24,30 +26,23 @@ function pilihMataKuliah(matkul) {
     selectedMataKuliah = matkul;
     selectedMatkulSpan.textContent = matkul;
     
-    // Pindah ke halaman presensi
     welcomePage.style.display = 'none';
     presensiPage.style.display = 'block';
     
-    // Reset form
     resetForm();
-    
-    // Mulai kamera
     startCamera();
 }
 
-// ========== FUNGSI: KEMBALI KE DAFTAR MATA KULIAH ==========
+// ========== FUNGSI: KEMBALI KE DAFTAR ==========
 function kembaliKeDaftar() {
-    // Matikan kamera
     if (videoStream) {
         videoStream.getTracks().forEach(track => track.stop());
         videoStream = null;
     }
     
-    // Kembali ke halaman welcome
     presensiPage.style.display = 'none';
     welcomePage.style.display = 'block';
     
-    // Reset variabel
     fotoData = null;
     selectedMataKuliah = '';
 }
@@ -65,9 +60,7 @@ async function startCamera() {
         video.srcObject = videoStream;
         await video.play();
         
-        // Aktifkan tombol ambil foto
         ambilFotoBtn.disabled = false;
-        console.log("Kamera siap");
         
     } catch (error) {
         console.error("Error kamera:", error);
@@ -83,26 +76,19 @@ function ambilFoto() {
         return;
     }
 
-    // Set ukuran canvas sesuai video
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     
-    // Gambar frame video ke canvas
     const context = canvas.getContext('2d');
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
-    // Konversi ke base64 (kualitas 70% agar ukuran lebih kecil)
     fotoData = canvas.toDataURL('image/jpeg', 0.7);
     
-    // Tampilkan indikator
     photoResultDiv.style.display = 'block';
     ambilFotoBtn.innerHTML = '✓ Foto Tersimpan';
     ambilFotoBtn.style.background = '#4caf50';
     
-    // Cek kelengkapan form
     checkFormComplete();
-    
-    console.log("Foto berhasil diambil, ukuran:", Math.round(fotoData.length / 1024), "KB");
 }
 
 // ========== FUNGSI: CEK KELENGKAPAN FORM ==========
@@ -130,39 +116,6 @@ function showStatus(message, type) {
     }
 }
 
-// ========== FUNGSI: UPLOAD FOTO KE GOOGLE DRIVE ==========
-async function uploadFotoKeDrive(fotoBase64, nim, nama, matkul) {
-    // Karena Google Apps Script kita akan handle upload foto ke Drive
-    // Data akan dikirim bersama dengan informasi lainnya
-    // Apps Script akan memisahkan foto dan menyimpannya ke Drive
-    
-    const data = {
-        nim: nim,
-        nama: nama,
-        mataKuliah: matkul,
-        foto: fotoBase64,
-        waktu: new Date().toISOString()
-    };
-    
-    try {
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        });
-        
-        console.log("Data terkirim ke Google Sheets");
-        return true;
-        
-    } catch (error) {
-        console.error("Error saat mengirim:", error);
-        return false;
-    }
-}
-
 // ========== FUNGSI: KIRIM PRESENSI ==========
 async function kirimPresensi() {
     const nim = nimInput.value.trim();
@@ -178,14 +131,40 @@ async function kirimPresensi() {
     submitBtn.disabled = true;
     ambilFotoBtn.disabled = true;
     
-    const success = await uploadFotoKeDrive(fotoData, nim, nama, selectedMataKuliah);
+    // Buat data dengan format FORM URL ENCODED
+    const formData = new URLSearchParams();
+    formData.append('nim', nim);
+    formData.append('nama', nama);
+    formData.append('mataKuliah', selectedMataKuliah);
+    formData.append('foto', fotoData);
+    formData.append('waktu', new Date().toISOString());
     
-    if (success) {
-        showStatus("✅ Presensi berhasil! Data telah tersimpan.", "success");
-        resetForm();
-        return true;
-    } else {
-        showStatus("❌ Gagal mengirim data. Coba lagi.", "error");
+    try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData.toString()
+        });
+        
+        const result = await response.text();
+        console.log("Response dari server:", result);
+        
+        if (result === 'SUKSES' || result.includes('SUKSES')) {
+            showStatus("✅ Presensi berhasil! Data telah tersimpan.", "success");
+            resetForm();
+            return true;
+        } else {
+            showStatus("❌ Presensi gagal: " + result, "error");
+            submitBtn.disabled = false;
+            ambilFotoBtn.disabled = false;
+            return false;
+        }
+        
+    } catch (error) {
+        console.error("Error saat mengirim:", error);
+        showStatus("❌ Gagal mengirim data. Cek koneksi internet.", "error");
         submitBtn.disabled = false;
         ambilFotoBtn.disabled = false;
         return false;
@@ -207,7 +186,6 @@ function resetForm() {
 }
 
 // ========== EVENT LISTENERS ==========
-// Tombol mata kuliah
 document.querySelectorAll('.matkul-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const matkul = btn.getAttribute('data-matkul');
@@ -215,20 +193,13 @@ document.querySelectorAll('.matkul-btn').forEach(btn => {
     });
 });
 
-// Tombol kembali
 backBtn.addEventListener('click', kembaliKeDaftar);
-
-// Input form
 nimInput.addEventListener('input', checkFormComplete);
 namaInput.addEventListener('input', checkFormComplete);
-
-// Tombol ambil foto
 ambilFotoBtn.addEventListener('click', ambilFoto);
-
-// Tombol submit
 submitBtn.addEventListener('click', kirimPresensi);
 
-// Cek dukungan kamera
+// ========== CEK DUKUNGAN KAMERA ==========
 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     showStatus("Browser Anda tidak mendukung akses kamera. Gunakan Chrome, Firefox, atau Safari.", "error");
     ambilFotoBtn.disabled = true;
